@@ -1,26 +1,218 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-paper: #ffffff;
+  --color-stone: #f7f7f7;
+  --color-sand: #ebe5dc;
+  --color-ink: #1c1b1b;
+  --color-muted: #6f675f;
+  --color-line: #e6e6e6;
+  --color-sold: #9a3b2f;
+  /* Admin: darker secondary text and status colours for readability at a glance. */
+  --color-soft: #4d4741;
+  --color-ok: #2f6b3a;
+  --color-warn: #8a5a12;
+
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-bebas), "Arial Narrow", sans-serif;
+
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Side padding used across the site; a utility so it works with lg:, sm: etc. */
+@utility gutter {
+  padding-inline: clamp(16px, 2.2vw, 32px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-sand);
+  }
+  :focus-visible {
+    outline: 1px solid var(--color-ink);
+    outline-offset: 3px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Small, widely tracked capitals: nav, labels, product names (Babyboo-style). */
+  .caps {
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .caps-sm {
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: 0.05em;
+  }
+
+  /* Underlined text link that draws in on hover. */
+  .link-line {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 3px;
+  }
+  .link-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: currentColor;
+    transform-origin: left;
+    transition: transform 0.5s var(--ease-soft);
+  }
+  .link-line:hover::after {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+  .link-hover {
+    position: relative;
+  }
+  .link-hover::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.5s var(--ease-soft);
+  }
+  .link-hover:hover::after,
+  .link-hover[aria-current="page"]::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 0 32px;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition:
+      background-color 0.4s var(--ease-soft),
+      color 0.4s var(--ease-soft),
+      border-color 0.4s var(--ease-soft);
+  }
+  .btn-solid {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    border: 1px solid var(--color-ink);
+  }
+  .btn-solid:hover:not(:disabled) {
+    background: #2c2824;
+  }
+  .btn-solid:disabled {
+    background: var(--color-sand);
+    border-color: var(--color-sand);
+    color: var(--color-muted);
+    cursor: not-allowed;
+  }
+  .btn-ghost {
+    border: 1px solid currentColor;
+  }
+  .btn-ghost:hover {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  .prose-tafara p {
+    margin-top: 1em;
+  }
+  .prose-tafara p:first-child {
+    margin-top: 0;
+  }
+}
+
+/* Entrance fade for hero copy */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 1.4s var(--ease-soft) both;
+}
+
+/* Hero film: hold on the upper body, drift to the feet, hold, drift back. */
+.hero-tilt {
+  object-position: 50% 0%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes hero-tilt {
+    0%,
+    33% {
+      object-position: 50% 0%;
+    }
+    50%,
+    83% {
+      object-position: 50% 100%;
+    }
+    100% {
+      object-position: 50% 0%;
+    }
+  }
+  .hero-tilt {
+    animation: hero-tilt 18s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Newsletter invitation */
+@keyframes popup-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.popup-in {
+  animation: popup-in 0.5s var(--ease-soft) both;
 }

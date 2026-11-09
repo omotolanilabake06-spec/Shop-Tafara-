@@ -1,17 +1,23 @@
 {
-  "name": "web",
+  "name": "shoptafara",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:sql": "node --env-file=.env.local scripts/db-sql.mjs",
+    "db:schema": "node --env-file=.env.local scripts/db-sql.mjs supabase/schema.sql",
+    "db:seed": "tsx --conditions=react-server --env-file=.env.local scripts/seed.mts",
+    "db:import-product": "tsx --conditions=react-server --env-file=.env.local scripts/import-product.mts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "next": "16.4.2",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -21,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "packageManager": "pnpm@10.33.3"

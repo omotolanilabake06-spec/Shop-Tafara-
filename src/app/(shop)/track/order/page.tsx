@@ -50,11 +50,11 @@ async function OrderView({ searchParams }: Pick<PageProps<"/track/order">, "sear
         </p>
         {placed && (
           <p className="mx-auto mt-6 max-w-[52ch] border-t border-line pt-6 text-[13px] leading-relaxed text-muted">
-            We have emailed you a link to this page. You can also find your order any time under{" "}
+            We have emailed you a link to this page. To check on your order any time, tap{" "}
             <Link href="/track" className="text-ink underline underline-offset-4">
-              Track your order
+              Track my order
             </Link>{" "}
-            with your order number <span className="tabular-nums text-ink">{order.number}</span> and your email.
+            at the top of the website and enter your email and phone number.
           </p>
         )}
         {checking && !order.payment.receipt && whatsapp && (
@@ -207,10 +207,10 @@ function NoOrder() {
       <p className="caps-sm text-muted">Your order</p>
       <h1 className="display mt-4 text-[40px] sm:text-[52px]">We couldn&rsquo;t open this order</h1>
       <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-muted">
-        The link may be incomplete. Enter your order number and email address to find it.
+        The link may be incomplete. Enter the email and phone number you ordered with to find it.
       </p>
       <Link href="/track" className="btn btn-solid mt-9">
-        Track your order
+        Track my order
       </Link>
     </div>
   );

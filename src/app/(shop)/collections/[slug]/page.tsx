@@ -7,7 +7,9 @@ import { ListingSkeleton } from "@/components/skeletons";
 import { getCollection, getCollections, getProducts } from "@/lib/catalog";
 
 export async function generateStaticParams() {
-  return (await getCollections()).map((c) => ({ slug: c.slug }));
+  const collections = await getCollections();
+  // Cache Components needs at least one entry to build; before the first collection exists it simply 404s.
+  return collections.length ? collections.map((c) => ({ slug: c.slug })) : [{ slug: "coming-soon" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/collections/[slug]">): Promise<Metadata> {

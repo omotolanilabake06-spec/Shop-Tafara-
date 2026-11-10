@@ -16,7 +16,7 @@ export function Footer({ nav, instagram }: { nav: NavItem[]; instagram: string }
     {
       title: "Help",
       links: [
-        { label: "Track your order", href: "/track" },
+        { label: "Track my order", href: "/track" },
         { label: "Size guide", href: "/size-guide" },
         { label: "Colour card", href: "/colour-card" },
         { label: "Delivery & returns", href: "/delivery" },

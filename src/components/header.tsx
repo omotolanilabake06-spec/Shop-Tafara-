@@ -149,8 +149,15 @@ function HeaderView({ nav, announcement, pathname }: HeaderProps & { pathname: s
             </ul>
           </nav>
 
-          {/* Bag */}
-          <div className="flex justify-end lg:ml-auto">
+          {/* Track my order (desktop) + bag */}
+          <div className="flex items-center justify-end gap-7 lg:ml-auto">
+            <Link
+              href="/track"
+              className="caps link-hover hidden py-6 lg:inline-block"
+              aria-current={pathname.startsWith("/track") ? "page" : undefined}
+            >
+              Track my order
+            </Link>
             <button
               type="button"
               onClick={openCart}
@@ -237,6 +244,7 @@ function HeaderView({ nav, announcement, pathname }: HeaderProps & { pathname: s
             {nav.map((item) => (
               <MobileItem key={item.label} item={item} tabbable={mobileOpen} />
             ))}
+            <MobileItem item={{ label: "Track my order", href: "/track" }} tabbable={mobileOpen} />
           </ul>
         </nav>
       </div>

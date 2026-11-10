@@ -135,8 +135,8 @@ export function CheckoutForm({
       <h1 className="display text-center text-[40px] sm:text-[52px]">Checkout</h1>
       <p className="caps-sm mt-3 text-center text-muted">No account needed</p>
 
-      <div className="mt-12 grid gap-14 lg:grid-cols-[1fr_400px] lg:gap-20">
-        <div className="space-y-14">
+      <div className="mt-12 grid grid-cols-[minmax(0,1fr)] gap-14 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-20">
+        <div className="min-w-0 space-y-14">
           {/* Honeypot: hidden from people, filled in by bots. */}
           <input name="company" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
 
@@ -196,7 +196,7 @@ export function CheckoutForm({
           </Step>
 
           <Step n="03" title="Pay by bank transfer">
-            <div className="bg-ink px-6 py-8 text-paper sm:px-9">
+            <div className="bg-ink px-5 py-8 text-paper sm:px-9">
               <p className="caps-sm text-paper/60">Amount to transfer</p>
               <p className="display mt-2 text-[44px] leading-none lining-nums sm:text-[52px]">{formatNaira(total)}</p>
               <dl className="mt-8 divide-y divide-paper/15 border-y border-paper/15">
@@ -340,9 +340,9 @@ function Step({ n, title, children }: { n: string; title: string; children: Reac
 
 function BankRow({ label, value, action }: { label: string; value: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3.5">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3.5">
       <dt className="caps-sm text-paper/60">{label}</dt>
-      <dd className="flex items-center gap-4 text-right text-[15px]">
+      <dd className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 text-right text-[15px]">
         {value}
         {action}
       </dd>

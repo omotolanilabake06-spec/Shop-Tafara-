@@ -7,7 +7,7 @@ import { STATUS_LABEL } from "@/lib/orders/progress";
 import { USING_SAMPLE_ORDERS } from "@/lib/orders/store";
 
 export const metadata: Metadata = {
-  title: "Track your order",
+  title: "Track my order",
   description: "Follow your Shop Tafara order from the atelier to your door.",
 };
 
@@ -16,16 +16,16 @@ export default function TrackPage() {
     <div className="gutter pb-28">
       <header className="mx-auto max-w-[560px] pb-12 pt-10 text-center sm:pb-14 sm:pt-16">
         <p className="caps-sm text-muted">Your order</p>
-        <h1 className="display mt-3 text-[40px] sm:text-[56px]">Track your order</h1>
+        <h1 className="display mt-3 text-[40px] sm:text-[56px]">Track my order</h1>
         <p className="mt-5 text-[14px] leading-relaxed text-muted">
-          Every piece is made for you after you order. Follow it here, from our atelier to your door.
+          See how far along your piece is, from our atelier to your door. Enter the email and phone number you used when you ordered.
         </p>
       </header>
 
       <TrackForm />
 
       <p className="mx-auto mt-10 max-w-[420px] text-center text-[14px] leading-relaxed text-muted">
-        Can&rsquo;t find your order number?{" "}
+        Something not right?{" "}
         <Link href="/contact" className="text-ink underline underline-offset-4">
           Contact us
         </Link>{" "}

@@ -8,7 +8,9 @@ import { clothingFilters } from "@/lib/filters";
 
 export async function generateStaticParams() {
   const categories = await getCategories();
-  return categories.filter((c) => c.department === "clothing").map((c) => ({ category: c.slug }));
+  const clothing = categories.filter((c) => c.department === "clothing");
+  // At least one entry keeps the build happy with no categories; it simply 404s.
+  return clothing.length ? clothing.map((c) => ({ category: c.slug })) : [{ category: "coming-soon" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/shop/[category]">): Promise<Metadata> {

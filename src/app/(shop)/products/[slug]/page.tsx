@@ -12,7 +12,8 @@ import { displayPrice } from "@/lib/format";
 
 export async function generateStaticParams() {
   const products = await getProducts();
-  return products.map((p) => ({ slug: p.slug }));
+  // At least one entry keeps the build happy with an empty shop; it simply 404s.
+  return products.length ? products.map((p) => ({ slug: p.slug })) : [{ slug: "coming-soon" }];
 }
 
 export async function generateMetadata({

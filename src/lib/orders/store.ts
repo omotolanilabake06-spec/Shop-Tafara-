@@ -148,7 +148,25 @@ export async function getOrder(number: string) {
   return row ? toOrder(row) : null;
 }
 
-/** Customer lookup on /track: both the order number and the email on the order must match. */
+/** The last ten digits, so 0803…, +234 803… and 234803… all match. */
+const phoneKey = (phone: string) => phone.replace(/\D/g, "").slice(-10);
+
+/**
+ * Customer lookup on /track: the email and the phone number on the order must both match, so
+ * knowing someone's email alone shows nothing. Newest first.
+ */
+export async function findOrdersByContact(email: string, phone: string) {
+  await connection();
+  const key = phoneKey(phone);
+  if (key.length < 7) return [];
+  const rows = must<OrderRow[]>(
+    await db().from("orders").select(COLUMNS).ilike("customer_email", email.trim().replace(/[%_\\]/g, "\\$&")).order("placed_at", { ascending: false }),
+    "finding orders",
+  );
+  return rows.map(toOrder).filter((o) => phoneKey(o.customer.phone) === key);
+}
+
+/** Customer lookup by order number and email. */
 export async function findOrderForCustomer(number: string, email: string) {
   const order = await getOrder(number);
   return order && order.customer.email.toLowerCase() === email.trim().toLowerCase() ? order : null;

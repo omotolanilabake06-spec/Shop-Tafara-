@@ -26,6 +26,12 @@
 }
 
 @layer base {
+  /* Never scroll sideways: anything wider than the screen is clipped. "clip" (not "hidden") keeps
+     sticky headers and summaries working. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   html {
     -webkit-text-size-adjust: 100%;
   }

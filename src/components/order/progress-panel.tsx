@@ -41,6 +41,16 @@ export function ProgressPanel({ order, production }: { order: Order; production:
         Your piece needs a little more time to be just right. We will be in touch personally with your new date.
       </p>
     );
+  } else if (order.status === "pending_payment") {
+    figure = "Payment check";
+    caption = "usually within a few working hours";
+    detail = (
+      <p className="mx-auto mt-6 max-w-[44ch] text-[15px] leading-relaxed text-muted">
+        {madeToOrder(order)
+          ? `Once your payment is confirmed, your piece is made for you and ready to ship in ${days.min}–${days.max} working days.`
+          : `Once your payment is confirmed, we pack your order within ${days.min}–${days.max} working days.`}
+      </p>
+    );
   } else if (order.status === "ready") {
     figure = order.delivery.method === "pickup" ? "Ready to collect" : "Ready";
     caption = "finished, pressed and checked";

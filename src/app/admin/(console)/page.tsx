@@ -36,6 +36,7 @@ async function Overview() {
 
   const open = orders.filter((o) => !["delivered", "cancelled"].includes(o.status));
   const late = open.filter((o) => isLate(o));
+  const toCheck = open.filter((o) => o.status === "pending_payment");
   const toStart = open.filter((o) => o.status === "confirmed");
   const ready = open.filter((o) => o.status === "ready");
   const making = open.filter((o) => o.status === "confirmed" || o.status === "in_production");
@@ -49,6 +50,11 @@ async function Overview() {
   const failedToday = payments.filter((p) => p.status === "failed" && inPeriod(p, 1));
 
   const attention = [
+    toCheck.length && {
+      tone: "red",
+      text: `${toCheck.length} new ${toCheck.length === 1 ? "order is" : "orders are"} waiting for you to confirm the bank transfer`,
+      href: "/admin/orders?view=pending_payment",
+    },
     late.length && { tone: "red", text: `${late.length} ${late.length === 1 ? "order is" : "orders are"} past the promised date`, href: "/admin/orders?view=late" },
     toStart.length && { tone: "amber", text: `${toStart.length} new ${toStart.length === 1 ? "order" : "orders"} to start`, href: "/admin/orders?view=confirmed" },
     ready.length && { tone: "green", text: `${ready.length} finished ${ready.length === 1 ? "piece is" : "pieces are"} waiting to be sent`, href: "/admin/orders?view=ready" },

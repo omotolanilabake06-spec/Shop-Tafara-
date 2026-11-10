@@ -1,4 +1,5 @@
-export type OrderStatus = "confirmed" | "in_production" | "ready" | "dispatched" | "delivered" | "cancelled";
+/** pending_payment: placed and paid by bank transfer, waiting for the studio to see the money arrive. */
+export type OrderStatus = "pending_payment" | "confirmed" | "in_production" | "ready" | "dispatched" | "delivered" | "cancelled";
 
 export type OrderItem = {
   slug: string;
@@ -43,11 +44,21 @@ export type Order = {
   subtotal: number;
   total: number;
   note?: string;
-  payment: { provider: "paystack"; reference: string; channel: "card" | "bank_transfer" | "ussd"; paidAt: string };
+  payment: {
+    provider: "paystack" | "bank_transfer";
+    reference: string;
+    channel: "card" | "bank_transfer" | "ussd";
+    /** Set when the payment is confirmed. */
+    paidAt?: string;
+    /** Bank transfers: the account the customer was shown, e.g. "Access Bank · 1897801255". */
+    account?: string;
+    /** Bank transfers: path of the uploaded receipt in the private "receipts" bucket. */
+    receipt?: string;
+  };
   status: OrderStatus;
   history: StatusEvent[];
   /**
-   * The ready-to-ship promise, fixed when the order is paid so later changes to
+   * The ready-to-ship promise, fixed when the payment is confirmed so later changes to
    * production times never move an existing customer's date.
    */
   readyWindow: { from: string; to: string };

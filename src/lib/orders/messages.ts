@@ -1,4 +1,5 @@
 // Words the customer receives at each step, by email and SMS. One place so the client can review them.
+import { formatNaira } from "@/lib/format";
 import { formatDay } from "@/lib/working-days";
 import { madeToOrder } from "./progress";
 import type { Order, OrderStatus } from "./types";
@@ -16,15 +17,23 @@ export function customerMessage(order: Order, status: OrderStatus): CustomerMess
   const first = order.customer.name.split(" ")[0];
   const link = trackingUrl(order);
   const pickup = order.delivery.method === "pickup";
+  const transfer = order.payment.provider === "bank_transfer";
   switch (status) {
+    case "pending_payment":
+      return {
+        subject: `We have received your order ${order.number}`,
+        heading: `Thank you, ${first}`,
+        body: `We have received your order and are now checking your transfer of ${formatNaira(order.total)}. As soon as it reaches our account, we will confirm your order by email${madeToOrder(order) ? " and begin making your piece" : ""}. You can follow your order at any time.`,
+        sms: `Shop Tafara: thank you, ${first}. We have received order ${order.number} and are checking your payment. Track it here: ${link}`,
+      };
     case "confirmed":
       return {
-        subject: `Your Shop Tafara order ${order.number}`,
-        heading: `Thank you, ${first}`,
+        subject: transfer ? `Payment received: order ${order.number} is confirmed` : `Your Shop Tafara order ${order.number}`,
+        heading: transfer ? `Your order is confirmed` : `Thank you, ${first}`,
         body: madeToOrder(order)
-          ? `Your order is confirmed and booked into our Lagos atelier. Your piece will be made for you and ready to ship by ${formatDay(order.readyWindow.to)}. You can follow every step at any time.`
-          : `Your order is confirmed. We will pack it with care and let you know the moment it is on its way.`,
-        sms: `Shop Tafara: thank you, ${first}. Order ${order.number} is confirmed. Track it here: ${link}`,
+          ? `${transfer ? "We have received your payment. " : ""}Your order is confirmed and booked into our Lagos atelier. Your piece will be made for you and ready to ship by ${formatDay(order.readyWindow.to)}. You can follow every step at any time.`
+          : `${transfer ? "We have received your payment. " : ""}Your order is confirmed. We will pack it with care and let you know the moment it is on its way.`,
+        sms: `Shop Tafara: ${transfer ? "payment received. " : `thank you, ${first}. `}Order ${order.number} is confirmed. Track it here: ${link}`,
       };
     case "in_production":
       return {

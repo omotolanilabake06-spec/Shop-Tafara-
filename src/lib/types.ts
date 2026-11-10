@@ -12,7 +12,7 @@ export type ColourKey =
   | "navy-blue"
   | "orange"
   | "pink"
-  | "cream";
+  | "cream" | "stripe-green" | "green" | "blue";
 
 export type Colour = { key: ColourKey; name: string; hex: string };
 
@@ -103,6 +103,8 @@ export type Settings = {
   announcement: { enabled: boolean; text: string; detail: string };
   production: { madeToOrderMin: number; madeToOrderMax: number; readyMadeMin: number; readyMadeMax: number };
   delivery: DeliveryZone[];
+  /** The account customers transfer to at checkout. */
+  bank: { bankName: string; accountName: string; accountNumber: string };
   notifications: { ownerEmail: string; sms: boolean };
 };
 

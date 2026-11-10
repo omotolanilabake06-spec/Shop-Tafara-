@@ -28,6 +28,7 @@ export function Due({ order }: { order: Order }) {
         </span>
       );
   }
+  if (order.status === "pending_payment") return <span className="font-medium text-sold">Waiting for you to confirm payment</span>;
   if (order.status === "ready") return <span>{order.delivery.method === "pickup" ? "Waiting for collection" : "Waiting to be sent"}</span>;
   if (order.status === "dispatched") return <span className="text-soft">With {order.dispatch?.courier ?? "courier"}</span>;
   if (order.status === "cancelled") return <span className="text-soft">Cancelled</span>;

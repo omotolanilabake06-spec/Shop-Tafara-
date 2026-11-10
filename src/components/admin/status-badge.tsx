@@ -4,6 +4,7 @@ import type { PaymentStatus } from "@/lib/payments/types";
 import { Badge, type Tone } from "./ui";
 
 const ORDER_TONE: Record<OrderStatus, Tone> = {
+  pending_payment: "solidRed",
   confirmed: "amber",
   in_production: "violet",
   ready: "green",

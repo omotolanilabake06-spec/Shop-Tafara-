@@ -16,6 +16,9 @@ export const COLOURS: Colour[] = [
   { key: "orange", name: "Orange", hex: "#E4A07A" },
   { key: "pink", name: "Pink", hex: "#E596AE" },
   { key: "cream", name: "Cream", hex: "#E6D6BD" },
+  { key: "stripe-green", name: "Stripe & Green", hex: "#1F5E4E" },
+  { key: "green", name: "Green", hex: "#2E9A8E" },
+  { key: "blue", name: "Blue", hex: "#3B63A8" },
 ];
 
 export const CLOTHING_SIZES = ["UK 6", "UK 8", "UK 10", "UK 12", "UK 14", "UK 16", "UK 18"];

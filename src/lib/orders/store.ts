@@ -1,8 +1,13 @@
 // Order reads and writes in Supabase. Pages, the admin and the tracking page only call these functions.
 import { connection } from "next/server";
+import { recordPayment } from "@/lib/db/payments";
+import { fetchProducts, takeStock } from "@/lib/db/products";
+import { fetchSettings } from "@/lib/db/settings";
 import { db, must } from "@/lib/db/supabase";
+import type { Settings } from "@/lib/types";
+import { addWorkingDays, lagosDate } from "@/lib/working-days";
 import { notifyCustomer } from "./notify";
-import { nextStatus } from "./progress";
+import { madeToOrder, nextStatus } from "./progress";
 import type { Order, OrderItem, OrderStatus, SentMessage, StatusEvent } from "./types";
 
 /** True while orders are sample data. The tracking page lists demo links while it is. */
@@ -101,8 +106,15 @@ export const orderRows = (o: Order) => ({
     dispatch: o.dispatch ?? null,
     cancel_reason: o.cancelReason ?? null,
   },
-  items: o.items.map((i) => ({
-    order_number: o.number,
+  items: itemRows(o.number, o.items),
+  events: eventRows(o.number, o.history),
+  messages: messageRows(o.number, o.messages),
+  notes: (o.staffNotes ?? []).map((n) => ({ order_number: o.number, text: n.text, at: n.at })),
+});
+
+const itemRows = (number: string, items: OrderItem[]) =>
+  items.map((i) => ({
+    order_number: number,
     slug: i.slug,
     name: i.name,
     image: i.image,
@@ -110,11 +122,7 @@ export const orderRows = (o: Order) => ({
     options: i.options,
     qty: i.qty,
     unit_price: i.unitPrice,
-  })),
-  events: eventRows(o.number, o.history),
-  messages: messageRows(o.number, o.messages),
-  notes: (o.staffNotes ?? []).map((n) => ({ order_number: o.number, text: n.text, at: n.at })),
-});
+  }));
 
 const eventRows = (number: string, events: StatusEvent[]) =>
   events.map((e) => ({ order_number: number, status: e.status, at: e.at, note: e.note ?? null }));
@@ -154,6 +162,103 @@ export async function getOrderWithKey(number: string, key: string) {
 
 // Writes -----------------------------------------------------------------------------------
 
+/** Ready-to-ship dates counted from `day`, using the production times in Settings. */
+export function readyWindow(items: Pick<OrderItem, "kind">[], production: Settings["production"], day = lagosDate()) {
+  const days = madeToOrder({ items: items as OrderItem[] })
+    ? { min: production.madeToOrderMin, max: production.madeToOrderMax }
+    : { min: production.readyMadeMin, max: production.readyMadeMax };
+  return { from: addWorkingDays(day, days.min), to: addWorkingDays(day, days.max) };
+}
+
+export type NewOrder = Pick<Order, "customer" | "delivery" | "items" | "note"> & { account: string; receipt?: string };
+
+/**
+ * Saves a checkout as an order waiting for its bank transfer to be confirmed. The order number and
+ * tracking key come from the database. Prices must already be checked against the catalogue.
+ */
+export async function createOrder(input: NewOrder) {
+  const settings = await fetchSettings();
+  const subtotal = input.items.reduce((n, i) => n + i.unitPrice * i.qty, 0);
+  const window = readyWindow(input.items, settings.production);
+  const created = must<{ number: string }>(
+    await db()
+      .from("orders")
+      .insert({
+        status: "pending_payment",
+        customer_name: input.customer.name,
+        customer_email: input.customer.email,
+        customer_phone: input.customer.phone,
+        delivery: input.delivery,
+        subtotal,
+        total: subtotal + input.delivery.fee,
+        note: input.note || null,
+        payment: { provider: "bank_transfer", reference: "", channel: "bank_transfer", account: input.account, receipt: input.receipt },
+        ready_from: window.from,
+        ready_to: window.to,
+      })
+      .select("number")
+      .single(),
+    "saving an order",
+  );
+  const number = created.number;
+  must(
+    await db()
+      .from("orders")
+      .update({ payment: { provider: "bank_transfer", reference: number, channel: "bank_transfer", account: input.account, receipt: input.receipt } })
+      .eq("number", number),
+    "saving an order",
+  );
+  must(await db().from("order_items").insert(itemRows(number, input.items)), "saving order items");
+  must(await db().from("order_events").insert(eventRows(number, [{ status: "pending_payment", at: new Date().toISOString() }])), "saving order history");
+
+  const order = (await getOrder(number))!;
+  const sent = await notifyCustomer(order, "pending_payment");
+  if (sent.length) must(await db().from("order_messages").insert(messageRows(number, sent)), "saving sent messages");
+  return order;
+}
+
+/**
+ * The studio has seen the transfer arrive: the production promise starts today, the payment is
+ * recorded for the Payments page and takings, and TAFARA HOME stock is taken.
+ */
+async function confirmPayment(order: Order) {
+  const settings = await fetchSettings();
+  const paidAt = new Date().toISOString();
+  const payment = { ...order.payment, paidAt };
+  const window = readyWindow(order.items, settings.production);
+  /** Runs once the order has actually moved, so a double click can't record the money twice. */
+  const record = async () => {
+  await recordPayment({
+    reference: order.number,
+    orderNumber: order.number,
+    customer: { name: order.customer.name, email: order.customer.email },
+    amount: order.total,
+    fees: 0,
+    refunded: 0,
+    channel: "bank_transfer",
+    method: `Bank transfer · ${settings.bank.bankName}`,
+    status: "success",
+    createdAt: order.placedAt,
+    paidAt,
+    events: [{ at: paidAt, type: "success", message: "Transfer confirmed by the studio" }],
+  });
+
+  const home = order.items.filter((i) => i.kind === "home");
+  if (home.length) {
+    const products = await fetchProducts();
+    const lines = home.flatMap((i) => {
+      const p = products.find((x) => x.slug === i.slug);
+      const scent = i.options.find((o) => o.label === "Scent")?.value;
+      const size = i.options.find((o) => o.label === "Size")?.value;
+      const v = p?.kind === "home" ? p.variants.find((x) => x.scent === scent && x.size === size) : undefined;
+      return v ? [{ variantId: v.id, qty: i.qty }] : [];
+    });
+    await takeStock(lines);
+  }
+  };
+  return { changes: { payment, readyWindow: window }, record };
+}
+
 /**
  * Moves an order one step along its journey and, unless told not to, tells the customer.
  * Only the next step is allowed, and the update only applies if the order is still where the
@@ -169,15 +274,27 @@ export async function advanceOrder(
 
   const changes: Partial<OrderRow> = { status: to };
   if (to === "dispatched") changes.dispatch = dispatch ?? null;
+  let paid: Awaited<ReturnType<typeof confirmPayment>> | undefined;
+  if (order.status === "pending_payment") {
+    paid = await confirmPayment(order);
+    Object.assign(changes, { payment: paid.changes.payment, ready_from: paid.changes.readyWindow.from, ready_to: paid.changes.readyWindow.to });
+  }
   const moved = must<{ number: string }[]>(
     await db().from("orders").update(changes).eq("number", order.number).eq("status", order.status).select("number"),
     "updating an order",
   );
   if (!moved.length) return null;
+  await paid?.record();
 
   const event: StatusEvent = { status: to, at: new Date().toISOString() };
   must(await db().from("order_events").insert(eventRows(order.number, [event])), "saving order history");
-  const updated: Order = { ...order, status: to, dispatch: to === "dispatched" ? dispatch : order.dispatch, history: [...order.history, event] };
+  const updated: Order = {
+    ...order,
+    ...paid?.changes,
+    status: to,
+    dispatch: to === "dispatched" ? dispatch : order.dispatch,
+    history: [...order.history, event],
+  };
   if (!notify) return updated;
 
   const sent = await notifyCustomer(updated, to);

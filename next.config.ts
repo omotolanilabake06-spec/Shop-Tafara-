@@ -5,6 +5,8 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // Checkout sends the payment receipt with the order: phone screenshots, or a PDF of up to 5 MB.
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   images: {
     remotePatterns: supabaseHost ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }] : [],
   },

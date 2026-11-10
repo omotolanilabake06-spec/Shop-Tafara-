@@ -25,7 +25,7 @@ export function RefundForm({ reference, refundable }: { reference: string; refun
         <textarea name="reason" rows={2} className={`${textarea} min-h-[64px]`} placeholder="e.g. Order cancelled before cutting" />
       </Field>
       <p className="rounded-[3px] bg-[#fbf3e4] px-3 py-2.5 text-[14px] text-warn">
-        Until Paystack is connected this records the refund only. Send the money back from your Paystack dashboard as well.
+        This records the refund only. Send the money back to the customer from the bank account as well.
       </p>
       {state.error && <p className="text-[14px] font-medium text-sold">{state.error}</p>}
       <div className="flex gap-3">

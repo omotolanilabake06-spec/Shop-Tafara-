@@ -111,3 +111,9 @@ export function useCartDrawer() {
     () => false,
   );
 }
+
+/** Empties the bag once an order has been placed. */
+export function clearCart() {
+  load();
+  commit(EMPTY);
+}

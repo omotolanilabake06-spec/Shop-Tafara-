@@ -12,7 +12,7 @@ export function Timeline({ order }: { order: Order }) {
       {journey.map((status, i) => {
         const reached = i <= current;
         const at = eventAt(order, status);
-        const expected = !reached && status === "ready" ? `Expected ${formatDayShort(order.readyWindow.from)}` : null;
+        const expected = !reached && status === "ready" && order.status !== "pending_payment" ? `Expected ${formatDayShort(order.readyWindow.from)}` : null;
         return (
           <li key={status} className="relative pb-9 pl-9 last:pb-0 md:pb-0 md:pl-0 md:pt-9 md:text-center">
             {i < journey.length - 1 && (

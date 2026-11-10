@@ -14,6 +14,7 @@ export const metadata: Metadata = { title: "Orders" };
 
 const VIEWS: { key: string; label: string; match: (o: Order) => boolean }[] = [
   { key: "open", label: "Open", match: (o) => !["delivered", "cancelled"].includes(o.status) },
+  { key: "pending_payment", label: "Check payment", match: (o) => o.status === "pending_payment" },
   { key: "confirmed", label: "To start", match: (o) => o.status === "confirmed" },
   { key: "in_production", label: "In the atelier", match: (o) => o.status === "in_production" },
   { key: "ready", label: "Ready", match: (o) => o.status === "ready" },
@@ -27,7 +28,7 @@ const VIEWS: { key: string; label: string; match: (o: Order) => boolean }[] = [
 export default function OrdersPage({ searchParams }: PageProps<"/admin/orders">) {
   return (
     <>
-      <PageHeader title="Orders" description="Every paid order, from the atelier to the customer's door. Open an order to move it to its next step." />
+      <PageHeader title="Orders" description="Every order, from the payment check to the customer's door. Open an order to move it to its next step." />
       <Suspense fallback={<div className="h-[60vh] animate-pulse rounded-[4px] bg-paper/70" />}>
         <Orders searchParams={searchParams} />
       </Suspense>
@@ -49,8 +50,14 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin/orders">, "search
   return (
     <>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat
+          label="Check payment"
+          value={count("pending_payment")}
+          note="Transfers to confirm"
+          href="?view=pending_payment"
+          tone={count("pending_payment") ? "red" : undefined}
+        />
         <Stat label="To start" value={count("confirmed")} note="Paid, not yet cut" href="?view=confirmed" />
-        <Stat label="In the atelier" value={count("in_production")} note="Being made" href="?view=in_production" />
         <Stat label="Ready to send" value={count("ready")} note="Finished pieces" href="?view=ready" />
         <Stat label="Running late" value={late} note="Past the promised date" href="?view=late" tone={late ? "red" : undefined} />
       </div>

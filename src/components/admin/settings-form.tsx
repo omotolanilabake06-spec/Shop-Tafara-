@@ -70,6 +70,25 @@ export function SettingsForm({ initial }: { initial: Settings }) {
         </div>
       </Card>
 
+      <Card title="Bank transfer" description="Customers see these details at checkout and transfer the order total to this account.">
+        <div className="grid gap-5 sm:grid-cols-3">
+          <Field label="Bank">
+            <input className={input} value={s.bank.bankName} onChange={(e) => setS((x) => ({ ...x, bank: { ...x.bank, bankName: e.target.value } }))} />
+          </Field>
+          <Field label="Account name">
+            <input className={input} value={s.bank.accountName} onChange={(e) => setS((x) => ({ ...x, bank: { ...x.bank, accountName: e.target.value } }))} />
+          </Field>
+          <Field label="Account number" error={errors.bank}>
+            <input
+              className={input}
+              inputMode="numeric"
+              value={s.bank.accountNumber}
+              onChange={(e) => setS((x) => ({ ...x, bank: { ...x.bank, accountNumber: e.target.value } }))}
+            />
+          </Field>
+        </div>
+      </Card>
+
       <Card title="Announcement bar" description="The thin black bar at the very top of every page.">
         <label className="mb-5 flex items-center gap-3">
           <input

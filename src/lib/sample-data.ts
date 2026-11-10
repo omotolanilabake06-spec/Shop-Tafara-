@@ -5,6 +5,7 @@ import type { Category } from "./types";
 export const CATEGORIES: Category[] = [
   { slug: "dresses", name: "Dresses", visible: true, department: "clothing" },
   { slug: "mini-dresses", name: "Mini Dresses", parent: "dresses", visible: true, department: "clothing" },
+  { slug: "midi-dresses", name: "Midi Dresses", parent: "dresses", visible: true, department: "clothing" },
   { slug: "maxi-dresses", name: "Maxi Dresses", parent: "dresses", visible: true, department: "clothing" },
   { slug: "tops", name: "Tops", visible: true, department: "clothing" },
   { slug: "sets", name: "Sets", visible: true, department: "clothing" },

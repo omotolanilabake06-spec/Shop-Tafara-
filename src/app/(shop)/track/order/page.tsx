@@ -23,13 +23,16 @@ export default function OrderPage({ searchParams }: PageProps<"/track/order">) {
 }
 
 async function OrderView({ searchParams }: Pick<PageProps<"/track/order">, "searchParams">) {
-  const { n, key } = await searchParams;
+  const { n, key, placed } = await searchParams;
   const [order, settings] = await Promise.all([
     typeof n === "string" && typeof key === "string" ? getOrderWithKey(n, key) : null,
     getSettings(),
   ]);
   if (!order) return <NoOrder />;
   const contact = settings.store.email;
+  const whatsapp = settings.store.whatsapp.replace(/\D/g, "");
+  const waLink = `https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello Shop Tafara, here is my payment receipt for order ${order.number} (${formatNaira(order.total)}).`)}`;
+  const checking = order.status === "pending_payment";
 
   const first = order.customer.name.split(" ")[0];
   const { headline, line } = intro(order);
@@ -42,9 +45,23 @@ async function OrderView({ searchParams }: Pick<PageProps<"/track/order">, "sear
         </p>
         <h1 className="display mt-4 text-[40px] sm:text-[56px]">{headline}</h1>
         <p className="mx-auto mt-5 max-w-[52ch] text-[14px] leading-relaxed text-muted">
-          {order.status === "confirmed" ? `Thank you, ${first}. ` : ""}
+          {order.status === "confirmed" || checking ? `Thank you, ${first}. ` : ""}
           {line}
         </p>
+        {placed && (
+          <p className="mx-auto mt-6 max-w-[52ch] border-t border-line pt-6 text-[13px] leading-relaxed text-muted">
+            We have emailed you a link to this page. You can also find your order any time under{" "}
+            <Link href="/track" className="text-ink underline underline-offset-4">
+              Track your order
+            </Link>{" "}
+            with your order number <span className="tabular-nums text-ink">{order.number}</span> and your email.
+          </p>
+        )}
+        {checking && !order.payment.receipt && whatsapp && (
+          <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn btn-solid mt-8">
+            Send your receipt on WhatsApp
+          </a>
+        )}
       </header>
 
       <div className="mx-auto max-w-[1040px]">
@@ -80,11 +97,35 @@ async function OrderView({ searchParams }: Pick<PageProps<"/track/order">, "sear
               )}
             </Detail>
             <Detail title="Payment">
-              <p>
-                Paid by {CHANNEL[order.payment.channel]} through Paystack
-                <br />
-                <span className="tabular-nums">Ref. {order.payment.reference}</span>
-              </p>
+              {order.payment.provider === "bank_transfer" ? (
+                <p>
+                  Bank transfer of <span className="tabular-nums">{formatNaira(order.total)}</span>
+                  <br />
+                  {checking ? (
+                    <>
+                      We are checking it now{order.payment.receipt ? ", with the receipt you uploaded." : "."}
+                      {!order.payment.receipt && whatsapp && (
+                        <>
+                          {" "}
+                          <a href={waLink} target="_blank" rel="noopener noreferrer" className="text-ink underline underline-offset-4">
+                            Send your receipt
+                          </a>
+                        </>
+                      )}
+                    </>
+                  ) : order.payment.paidAt ? (
+                    `Received ${formatDay(lagosDate(order.payment.paidAt))}`
+                  ) : (
+                    "Received"
+                  )}
+                </p>
+              ) : (
+                <p>
+                  Paid by {CHANNEL[order.payment.channel]} through Paystack
+                  <br />
+                  <span className="tabular-nums">Ref. {order.payment.reference}</span>
+                </p>
+              )}
             </Detail>
             {order.note && (
               <Detail title="Your note">
@@ -113,6 +154,13 @@ function intro(order: Order) {
   const many = order.items.filter((i) => i.kind === "clothing").reduce((n, i) => n + i.qty, 0) > 1;
   const piece = many ? "Your pieces are" : "Your piece is";
   switch (order.status) {
+    case "pending_payment":
+      return {
+        headline: "We are checking your payment",
+        line: `Your order is placed. As soon as your transfer of ${formatNaira(order.total)} reaches us, we will confirm it by email${
+          madeToOrder(order) ? " and begin making your piece" : ""
+        }.`,
+      };
     case "confirmed":
       return {
         headline: "Your order is confirmed",

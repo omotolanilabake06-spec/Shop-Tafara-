@@ -254,3 +254,10 @@ create index if not exists journal_posts_published_idx on journal_posts (status,
 alter table journal_posts enable row level security;
 drop policy if exists "public reads published journal posts" on journal_posts;
 create policy "public reads published journal posts" on journal_posts for select using (status = 'published');
+
+-- Bank-transfer checkout ---------------------------------------------------------------------
+-- Orders wait in 'pending_payment' until the studio confirms the transfer reached the account.
+alter table orders drop constraint if exists orders_status_check;
+alter table orders add constraint orders_status_check check (status in ('pending_payment', 'confirmed', 'in_production', 'ready', 'dispatched', 'delivered', 'cancelled'));
+-- Receipts customers upload at checkout. Private: the admin sees them through short-lived signed links.
+insert into storage.buckets (id, name, public, file_size_limit) values ('receipts', 'receipts', false, 6291456) on conflict (id) do nothing;

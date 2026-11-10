@@ -11,11 +11,11 @@ export type SeedData = { orders: Order[]; payments: Payment[] };
 
 export const DEFAULT_SETTINGS: Settings = {
   store: {
-    email: "hello@shoptafara.com",
-    phone: "+234 800 000 0000",
-    whatsapp: "+234 800 000 0000",
+    email: "contact@shoptafara.com",
+    phone: "+234 815 402 4094",
+    whatsapp: "+234 815 402 4094",
     instagram: "shoptafara",
-    address: "Lagos, Nigeria",
+    address: "Onikan, Lagos",
   },
   announcement: { enabled: true, text: "Made to order in Lagos", detail: "Ready to ship in 5–7 working days" },
   production: { madeToOrderMin: 5, madeToOrderMax: 7, readyMadeMin: 1, readyMadeMax: 2 },
@@ -25,7 +25,8 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "international", name: "International (DHL Express)", description: "3–6 working days after dispatch. Duties may apply.", fee: 45000, active: true },
     { id: "pickup", name: "Studio pickup", description: "Collect from our Lagos studio once your piece is ready.", fee: 0, active: true, pickup: true },
   ],
-  notifications: { ownerEmail: "hello@shoptafara.com", sms: true },
+  bank: { bankName: "Access Bank", accountName: "Tafara Lagos", accountNumber: "1897801255" },
+  notifications: { ownerEmail: "contact@shoptafara.com", sms: true },
 };
 
 const METHOD: Record<Order["payment"]["channel"], string[]> = {

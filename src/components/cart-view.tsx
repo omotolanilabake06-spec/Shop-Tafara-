@@ -57,7 +57,7 @@ export function CartView() {
           <Link href="/checkout" className="btn btn-solid mt-6 w-full">
             Checkout
           </Link>
-          <p className="mt-4 text-center text-[12px] text-muted">Card · Bank transfer · USSD</p>
+          <p className="mt-4 text-center text-[12px] text-muted">Pay by bank transfer · No account needed</p>
         </aside>
       </div>
     </div>

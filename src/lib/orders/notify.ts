@@ -31,15 +31,39 @@ export async function notifyCustomer(order: Order, status: OrderStatus): Promise
   return sent;
 }
 
-/** New-order alert for the studio. Called by checkout once Paystack confirms payment (Phase 3). */
+/** New-order alert for the studio, sent when a customer presses "I have made payment". */
 export async function notifyOwnerOfOrder(order: Order) {
   const settings = await fetchSettings();
-  const lines = order.items.map((i) => `${i.qty} × ${i.name} (${i.options.map((o) => o.value).join(", ")})`).join("\n");
-  const note = order.note ? `<p><i>Note: ${esc(order.note)}</i></p>` : "";
+  const lines = order.items.map((i) => `${i.qty} × ${i.name} (${i.options.map((o) => o.value).join(", ")})`);
+  const admin = `${origin()}/admin/orders/${order.number}`;
+  const receipt = order.payment.receipt ? "Receipt uploaded. Open the order to view it." : "No receipt uploaded. They may send it on WhatsApp.";
+  const where = order.delivery.address.length ? order.delivery.address.join(", ") : "Collecting from the studio";
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:6px 16px 6px 0;color:#6f675f;vertical-align:top;white-space:nowrap">${label}</td><td style="padding:6px 0;color:#161412">${value}</td></tr>`;
+  const html = `<!doctype html><html><body style="margin:0;background:#f5f2ed">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ed;padding:32px 12px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;font:15px/1.6 'Helvetica Neue',Helvetica,Arial,sans-serif">
+  <tr><td style="padding:32px 32px 0">
+    <div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#6f675f">New order · check payment</div>
+    <div style="font:400 30px/1.2 Georgia,serif;color:#161412;margin-top:8px">${esc(order.number)} · ${formatNaira(order.total)}</div>
+    <p style="color:#4d4741;margin:12px 0 0">${esc(order.customer.name)} says they have transferred <b>${formatNaira(order.total)}</b> to ${esc(order.payment.account ?? "the shop account")}. Check that the money has arrived, then confirm the payment in the admin.</p>
+  </td></tr>
+  <tr><td style="padding:20px 32px 0"><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">
+    ${row("Pieces", lines.map(esc).join("<br>"))}
+    ${row("Customer", `${esc(order.customer.name)}<br>${esc(order.customer.email)}<br>${esc(order.customer.phone)}`)}
+    ${row(esc(order.delivery.label), esc(where))}
+    ${row("Receipt", receipt)}
+    ${order.note ? row("Note", `<i>${esc(order.note)}</i>`) : ""}
+  </table></td></tr>
+  <tr><td style="padding:28px 32px 36px">
+    <a href="${admin}" style="display:inline-block;background:#161412;color:#ffffff;text-decoration:none;font-size:12px;letter-spacing:.22em;text-transform:uppercase;padding:16px 28px">Open the order</a>
+  </td></tr>
+</table></td></tr></table></body></html>`;
   return sendEmail({
     to: settings.notifications.ownerEmail,
-    subject: `New order ${order.number} · ${formatNaira(order.total)}`,
-    html: `<p style="font:15px/1.6 Helvetica,Arial,sans-serif">New order <b>${order.number}</b> from ${esc(order.customer.name)}.</p><pre style="font:14px/1.6 Helvetica,Arial,sans-serif">${esc(lines)}</pre>${note}<p><a href="${origin()}/admin/orders/${order.number}">Open in admin</a></p>`,
-    text: `New order ${order.number} from ${order.customer.name}\n\n${lines}\n\nOpen: ${origin()}/admin/orders/${order.number}`,
+    subject: `New order ${order.number} · ${formatNaira(order.total)} · check payment`,
+    html,
+    text: `New order ${order.number} from ${order.customer.name}: ${formatNaira(order.total)} by bank transfer.\n\n${lines.join("\n")}\n\n${receipt}\n\nOpen: ${admin}`,
+    replyTo: order.customer.email,
   });
 }

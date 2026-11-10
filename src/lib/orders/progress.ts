@@ -8,7 +8,8 @@ export const PRODUCTION_DAYS = { madeToOrder: { min: 5, max: 7 }, readyMade: { m
 export const madeToOrder = (order: Pick<Order, "items">) => order.items.some((i) => i.kind === "clothing");
 
 export const STATUS_LABEL: Record<OrderStatus, string> = {
-  confirmed: "Order confirmed",
+  pending_payment: "Order placed",
+  confirmed: "Payment confirmed",
   in_production: "In the atelier",
   ready: "Ready",
   dispatched: "On its way",
@@ -18,6 +19,7 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
 
 /** Admin wording, shorter and about the work rather than the customer. */
 export const ADMIN_STATUS_LABEL: Record<OrderStatus, string> = {
+  pending_payment: "Check payment",
   confirmed: "To start",
   in_production: "In the atelier",
   ready: "Ready",
@@ -35,9 +37,12 @@ export function statusLabel(order: Order, status: OrderStatus) {
   return STATUS_LABEL[status];
 }
 
-/** The journey for this order: ready-made pieces skip the atelier, pickups skip dispatch. */
+/**
+ * The journey for this order: bank-transfer orders start with the payment check, ready-made
+ * pieces skip the atelier, pickups skip dispatch.
+ */
 export function steps(order: Order): OrderStatus[] {
-  const s: OrderStatus[] = ["confirmed"];
+  const s: OrderStatus[] = order.payment.provider === "bank_transfer" ? ["pending_payment", "confirmed"] : ["confirmed"];
   if (madeToOrder(order)) s.push("in_production");
   s.push("ready");
   if (order.delivery.method !== "pickup") s.push("dispatched");

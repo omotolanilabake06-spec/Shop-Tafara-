@@ -23,6 +23,9 @@ export async function saveSettingsAction(_: SettingsState, form: FormData): Prom
   if (!email.test(s.notifications.ownerEmail)) errors.ownerEmail = "Enter a valid email address.";
   s.store.instagram = s.store.instagram.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, "");
 
+  s.bank = { bankName: s.bank.bankName.trim(), accountName: s.bank.accountName.trim(), accountNumber: s.bank.accountNumber.replace(/\s/g, "") };
+  if (!s.bank.bankName || !s.bank.accountName || !/^\d{10}$/.test(s.bank.accountNumber)) errors.bank = "Enter the bank, the account name and the 10-digit account number.";
+
   const p = s.production;
   for (const k of Object.keys(p) as (keyof typeof p)[]) {
     p[k] = Number(p[k]);

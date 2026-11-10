@@ -10,6 +10,7 @@ import { PaymentBadge, StatusBadge } from "@/components/admin/status-badge";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, PageHeader, Pair, button, input } from "@/components/admin/ui";
 import { paymentsForOrder } from "@/lib/db/payments";
+import { isPdf, receiptUrl } from "@/lib/db/receipts";
 import { formatNaira } from "@/lib/format";
 import { customerMessage, trackingPath } from "@/lib/orders/messages";
 import { ADMIN_STATUS_LABEL, isLate, nextStatus } from "@/lib/orders/progress";
@@ -35,6 +36,7 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
   const { number } = await params;
   const [order, payments] = await Promise.all([getOrder(number), paymentsForOrder(number)]);
   if (!order) notFound();
+  const receipt = order.payment.receipt ? { url: await receiptUrl(order.payment.receipt), pdf: isPdf(order.payment.receipt) } : null;
   const next = nextStatus(order);
   const refundable = payments.some((p) => p.status === "success" || p.status === "partially_refunded");
 
@@ -50,7 +52,8 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
         }
         description={
           <>
-            Placed {formatStamp(order.placedAt)} by {order.customer.name} · {formatNaira(order.total)} paid by {CHANNEL[order.payment.channel].toLowerCase()}
+            Placed {formatStamp(order.placedAt)} by {order.customer.name} · {formatNaira(order.total)}{" "}
+            {order.status === "pending_payment" ? "by bank transfer, not yet confirmed" : `paid by ${CHANNEL[order.payment.channel].toLowerCase()}`}
           </>
         }
         actions={
@@ -67,7 +70,7 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
               <p className="text-soft">{order.cancelReason ?? "No reason was given."}</p>
             </Card>
           ) : next ? (
-            <NextStep order={order} next={next} />
+            <NextStep order={order} next={next} receipt={receipt} />
           ) : (
             <Card title="Complete">
               <p className="text-soft">This order has been delivered. Nothing more to do.</p>
@@ -137,10 +140,14 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
 
         <div className="space-y-6">
           <Card title="Ready to ship">
-            <p className="text-[16px]">
-              {formatDay(order.readyWindow.from)}
-              <span className="block text-[14px] text-soft">at the latest {formatDay(order.readyWindow.to)}</span>
-            </p>
+            {order.status === "pending_payment" ? (
+              <p className="text-[15px] text-soft">The dates are set when you confirm the payment.</p>
+            ) : (
+              <p className="text-[16px]">
+                {formatDay(order.readyWindow.from)}
+                <span className="block text-[14px] text-soft">at the latest {formatDay(order.readyWindow.to)}</span>
+              </p>
+            )}
             <div className="mt-3 border-t border-line pt-3">
               <Due order={order} />
             </div>
@@ -190,6 +197,24 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
             )}
           </Card>
 
+          {order.payment.provider === "bank_transfer" && (
+            <Card title="Bank transfer">
+              <p className="tabular-nums">{formatNaira(order.total)}</p>
+              <p className="text-[14px] text-soft">To {order.payment.account}</p>
+              <p className="mt-3 border-t border-line pt-3 text-[15px]">
+                {order.payment.paidAt ? `Confirmed ${formatStamp(order.payment.paidAt)}` : <span className="font-medium text-sold">Not confirmed yet</span>}
+              </p>
+              {receipt?.url ? (
+                <a href={receipt.url} target="_blank" rel="noreferrer" className={`${button.quiet} mt-2 inline-block`}>
+                  View receipt ↗
+                </a>
+              ) : (
+                <p className="mt-1 text-[14px] text-soft">No receipt uploaded. Check WhatsApp.</p>
+              )}
+            </Card>
+          )}
+
+          {payments.length > 0 && (
           <Card title="Payments" flush>
             <ul className="divide-y divide-line">
               {payments.map((p) => (
@@ -207,6 +232,7 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
               ))}
             </ul>
           </Card>
+          )}
 
           {order.status !== "delivered" && order.status !== "cancelled" && <CancelOrder number={order.number} canRefund={refundable} />}
         </div>
@@ -216,7 +242,11 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
 }
 
 const ACTION: Record<OrderStatus, { title: string; hint: string }> = {
-  confirmed: { title: "Confirm order", hint: "" },
+  pending_payment: { title: "Check payment", hint: "" },
+  confirmed: {
+    title: "Confirm payment",
+    hint: "Press this once you have seen the transfer arrive in the bank account. The production dates start from today.",
+  },
   in_production: { title: "Start production", hint: "Press this when the fabric is cut and the piece is with the tailor." },
   ready: { title: "Mark as ready", hint: "Press this when the piece is finished, pressed and checked." },
   dispatched: { title: "Mark as sent", hint: "Press this when the order has been handed to the courier or rider." },
@@ -224,7 +254,7 @@ const ACTION: Record<OrderStatus, { title: string; hint: string }> = {
   cancelled: { title: "Cancel order", hint: "" },
 };
 
-function NextStep({ order, next }: { order: Order; next: OrderStatus }) {
+function NextStep({ order, next, receipt }: { order: Order; next: OrderStatus; receipt: { url: string | null; pdf: boolean } | null }) {
   const pickup = order.delivery.method === "pickup";
   const action =
     next === "delivered" && pickup ? { title: "Mark as collected", hint: "Press this when the customer has collected the order." } : ACTION[next];
@@ -237,6 +267,36 @@ function NextStep({ order, next }: { order: Order; next: OrderStatus }) {
         <p className="text-[14px] font-medium text-soft">Next step</p>
         <h2 className="mt-0.5 font-serif text-[30px] leading-tight">{action.title}</h2>
         <p className="mt-1 text-[15px] text-soft">{action.hint}</p>
+        {order.status === "pending_payment" && (
+          <div className="mt-4 rounded-[3px] border border-line bg-[#faf8f5] px-4 py-4">
+            <p className="text-[15px]">
+              Look for <b className="font-medium tabular-nums">{formatNaira(order.total)}</b> from <b className="font-medium">{order.customer.name}</b> in{" "}
+              {order.payment.account ?? "the shop account"}.
+            </p>
+            {receipt?.url ? (
+              receipt.pdf ? (
+                <a href={receipt.url} target="_blank" rel="noreferrer" className={`${button.secondary} mt-3`}>
+                  Open the receipt (PDF) ↗
+                </a>
+              ) : (
+                <a href={receipt.url} target="_blank" rel="noreferrer" className="mt-3 block w-fit">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- short-lived private link */}
+                  <img src={receipt.url} alt={`Payment receipt for ${order.number}`} className="max-h-[420px] w-auto rounded-[2px] border border-line" />
+                  <span className="mt-1.5 block text-[13px] text-soft">Open full size ↗</span>
+                </a>
+              )
+            ) : (
+              <p className="mt-2 text-[14px] text-soft">
+                No receipt uploaded. They may have sent it on{" "}
+                <a href={`https://wa.me/${order.customer.phone.replace(/\D/g, "").replace(/^0/, "234")}`} target="_blank" rel="noreferrer" className={button.quiet}>
+                  WhatsApp ↗
+                </a>
+                .
+              </p>
+            )}
+            <p className="mt-3 text-[13px] text-soft">If the money never arrives, cancel the order below.</p>
+          </div>
+        )}
       </div>
 
       <form action={moveOrder} className="px-6 pb-6 pt-4">
@@ -300,8 +360,10 @@ function Activity({ order }: { order: Order }) {
     ...order.history.map((e) => ({
       at: e.at,
       text:
-        e.status === "confirmed" ? (
-          "Paid and confirmed"
+        e.status === "pending_payment" ? (
+          "Order placed: customer says they have paid by bank transfer"
+        ) : e.status === "confirmed" ? (
+          order.payment.provider === "bank_transfer" ? "Payment confirmed" : "Paid and confirmed"
         ) : (
           <>
             Moved to <b className="font-medium">{ADMIN_STATUS_LABEL[e.status]}</b>

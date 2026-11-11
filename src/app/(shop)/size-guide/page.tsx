@@ -3,22 +3,28 @@ import { Section, TextPage } from "@/components/text-page";
 
 export const metadata: Metadata = { title: "Size guide" };
 
-// Body measurements in centimetres. Placeholder chart: replace with Shop Tafara's own block measurements.
+// Shop Tafara's body measurements in inches: UK size, bust, waist, hips.
 const ROWS = [
-  ["6", 78, 60, 86],
-  ["8", 82, 64, 90],
-  ["10", 87, 69, 95],
-  ["12", 92, 74, 100],
-  ["14", 97, 79, 105],
-  ["16", 102, 84, 110],
-  ["18", 107, 89, 115],
+  ["6", 32, 26, 36],
+  ["8", 34, 28, 38],
+  ["10", 36, 30, 40],
+  ["12", 38, 32, 42],
+  ["14", 40, 34, 44],
+  ["16", 42, 36, 46],
+  ["18", 44, 38, 48],
+  ["20", 46, 40, 50],
+  ["22", 48, 42, 52],
 ] as const;
 
 export default function SizeGuidePage() {
   return (
-    <TextPage eyebrow="Help" title="Size guide" intro="All pieces are cut to standard UK sizes. Measure over light clothing and compare with the chart below.">
+    <TextPage
+      eyebrow="Help"
+      title="Size guide"
+      intro="Every piece is cut to standard UK sizes. These are body measurements in inches, not garment measurements."
+    >
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[460px] border-collapse text-left text-[14px] tabular-nums">
+        <table className="w-full min-w-[320px] border-collapse text-left text-[14px] tabular-nums">
           <thead>
             <tr className="border-b border-ink">
               {["UK size", "Bust", "Waist", "Hips"].map((h) => (
@@ -34,9 +40,9 @@ export default function SizeGuidePage() {
                 <th scope="row" className="py-3.5 pr-4 font-normal text-ink">
                   {size}
                 </th>
-                <td className="py-3.5 pr-4">{bust} cm</td>
-                <td className="py-3.5 pr-4">{waist} cm</td>
-                <td className="py-3.5 pr-4">{hip} cm</td>
+                <td className="py-3.5 pr-4">{bust}&Prime;</td>
+                <td className="py-3.5 pr-4">{waist}&Prime;</td>
+                <td className="py-3.5 pr-4">{hip}&Prime;</td>
               </tr>
             ))}
           </tbody>
@@ -44,18 +50,26 @@ export default function SizeGuidePage() {
       </div>
       <div className="mt-12">
         <Section title="How to measure">
+          <p>Wrap a measuring tape around:</p>
           <p>
-            <span className="text-ink">Bust:</span> around the fullest part of your chest, keeping the tape level.
+            <span className="text-ink">Bust:</span> the fullest part of your bust.
           </p>
           <p>
-            <span className="text-ink">Waist:</span> around the narrowest part of your waist.
+            <span className="text-ink">Waist:</span> the narrowest part of your waist.
           </p>
           <p>
-            <span className="text-ink">Hips:</span> around the fullest part of your hips, feet together.
+            <span className="text-ink">Hips:</span> the fullest part of your hips.
           </p>
+          <p>Measure over light clothing, keeping the tape snug but not tight.</p>
         </Section>
         <Section title="Between sizes?">
-          <p>For fitted pieces such as corsets, choose the larger size. For relaxed pieces, choose your usual size.</p>
+          <p>
+            Size up, or message us on{" "}
+            <a href="https://wa.me/2348154024094" target="_blank" rel="noreferrer" className="link-line text-ink">
+              WhatsApp at +234 815 402 4094
+            </a>{" "}
+            and we will help you choose.
+          </p>
         </Section>
       </div>
     </TextPage>

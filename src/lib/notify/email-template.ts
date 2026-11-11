@@ -9,13 +9,22 @@ export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 const SERIF = "'Cormorant Garamond', Georgia, 'Times New Roman', serif";
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
+/**
+ * Images in an email are fetched by the mail provider (Gmail, Outlook), never by the reader's computer,
+ * so they must come from a public address. Testing locally, the live site serves the logo.
+ */
+const LIVE_SITE = "https://shoptafara.com";
+const publicOrigin = (origin: string) => (/localhost|127\.0\.0\.1/.test(origin) ? LIVE_SITE : origin);
+/** Product photos are stored as full Supabase links; older ones may be site paths. */
+const imageUrl = (src: string, origin: string) => (/^https?:\/\//.test(src) ? src : `${publicOrigin(origin)}${src}`);
+
 export function orderEmailHtml({ order, message, link, settings, origin }: { order: Order; message: CustomerMessage; link: string; settings: Settings; origin: string }) {
   const items = order.items
     .map(
       (i) => `
       <tr>
         <td style="padding:14px 0;border-bottom:1px solid #e4ded6;width:64px;vertical-align:top">
-          <img src="${origin}${esc(i.image)}" width="56" height="84" alt="" style="display:block;object-fit:cover;background:#f5f2ed">
+          <img src="${esc(imageUrl(i.image, origin))}" width="56" height="84" alt="" style="display:block;object-fit:cover;background:#f5f2ed">
         </td>
         <td style="padding:14px 0 14px 16px;border-bottom:1px solid #e4ded6;vertical-align:top;font:14px/1.5 ${SANS};color:#161412">
           <div style="letter-spacing:.12em;text-transform:uppercase;font-size:12px">${esc(i.name)}</div>
@@ -33,7 +42,7 @@ export function orderEmailHtml({ order, message, link, settings, origin }: { ord
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff">
         <tr><td align="center" style="padding:36px 32px 8px">
-          <img src="${origin}/brand/logo-dark.png" width="120" alt="Shop Tafara" style="display:block">
+          <img src="${publicOrigin(origin)}/brand/logo-dark.png" width="120" alt="Shop Tafara" style="display:block">
         </td></tr>
         <tr><td align="center" style="padding:24px 32px 0;font:400 34px/1.15 ${SERIF};color:#161412">${esc(message.heading)}</td></tr>
         <tr><td align="center" style="padding:16px 40px 0;font:15px/1.7 ${SANS};color:#4d4741">${esc(message.body)}</td></tr>

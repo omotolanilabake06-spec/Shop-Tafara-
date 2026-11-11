@@ -134,7 +134,8 @@ export async function placeOrder(_: CheckoutState, form: FormData): Promise<Chec
       account: `${settings.bank.bankName} · ${settings.bank.accountNumber} · ${settings.bank.accountName}`,
       receipt: hasReceipt ? await saveReceipt(receipt) : undefined,
     });
-    await notifyOwnerOfOrder(order);
+    const alert = await notifyOwnerOfOrder(order);
+    if (alert.result === "failed") console.error(`[checkout] owner alert for ${order.number} failed: ${alert.error}`);
     return { placed: `${trackingPath(order)}&placed=1` };
   } catch (e) {
     console.error("[checkout]", e);

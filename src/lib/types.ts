@@ -12,7 +12,7 @@ export type ColourKey =
   | "navy-blue"
   | "orange"
   | "pink"
-  | "cream" | "stripe-green" | "green" | "blue";
+  | "cream" | "stripe-green" | "green" | "blue" | "mauve" | "purple-adire";
 
 export type Colour = { key: ColourKey; name: string; hex: string };
 

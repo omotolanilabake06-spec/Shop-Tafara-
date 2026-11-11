@@ -15,7 +15,8 @@ export function ProductPurchase({ product, colours }: { product: Product; colour
 function ClothingPurchase({ product, colours }: { product: Extract<Product, { kind: "clothing" }>; colours: Colour[] }) {
   const options = colours.filter((c) => product.colours.includes(c.key));
   const { colour: colourKey, setColour: chooseColour } = useProductColour();
-  const colour = options.find((c) => c.key === colourKey) ?? null;
+  // A piece in one colour needs no choice.
+  const colour = options.find((c) => c.key === colourKey) ?? (options.length === 1 ? options[0] : null);
   const setColour = (c: Colour) => chooseColour(c.key);
   const [size, setSize] = useState<string | null>(null);
   const [tried, setTried] = useState(false);

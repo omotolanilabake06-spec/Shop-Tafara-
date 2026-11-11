@@ -61,7 +61,7 @@ export default async function ContactPage() {
               </a>
             </Row>
           )}
-          <Row label="Studio">{store.address}. Visits by appointment only.</Row>
+          <Row label="Studio">{store.address}</Row>
         </dl>
 
         <nav aria-label="Quick help" className="mt-12">

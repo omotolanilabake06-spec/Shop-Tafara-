@@ -9,6 +9,7 @@ import { notifyOwnerOfOrder } from "@/lib/orders/notify";
 import { createOrder } from "@/lib/orders/store";
 import type { Order, OrderItem } from "@/lib/orders/types";
 import { COLOURS } from "@/lib/fabric";
+import { zoneRegion } from "@/lib/types";
 
 export type CheckoutState = {
   error?: string;
@@ -44,14 +45,15 @@ export async function placeOrder(_: CheckoutState, form: FormData): Promise<Chec
 
   const zone = settings.delivery.find((z) => z.active && z.id === text(form, "delivery"));
   if (!zone) errors.delivery = "Please choose how you would like to receive your order.";
+  const abroad = zone ? zoneRegion(zone) === "international" : false;
   const address = zone?.pickup
     ? []
-    : [text(form, "address"), text(form, "city", 80), text(form, "state", 80), zone?.id === "international" ? text(form, "country", 80) : ""].filter(Boolean);
+    : [text(form, "address"), text(form, "city", 80), text(form, "state", 80), abroad ? text(form, "country", 80) : ""].filter(Boolean);
   if (zone && !zone.pickup) {
     if (!text(form, "address")) errors.address = "Please enter your street address.";
     if (!text(form, "city", 80)) errors.city = "Please enter your town or city.";
-    if (!text(form, "state", 80)) errors.state = zone.id === "international" ? "Please enter your region or postcode." : "Please enter your state.";
-    if (zone.id === "international" && !text(form, "country", 80)) errors.country = "Please enter your country.";
+    if (!text(form, "state", 80)) errors.state = abroad ? "Please enter your region or postcode." : "Please enter your state.";
+    if (abroad && !text(form, "country", 80)) errors.country = "Please enter your country.";
   }
 
   let lines: Line[] = [];
@@ -119,7 +121,7 @@ export async function placeOrder(_: CheckoutState, form: FormData): Promise<Chec
   }
 
   const delivery: Order["delivery"] = {
-    method: (["lagos", "nationwide", "international", "pickup"].includes(zone!.id) ? zone!.id : zone!.pickup ? "pickup" : "nationwide") as Order["delivery"]["method"],
+    method: ({ lagos: "lagos", nigeria: "nationwide", international: "international", pickup: "pickup" } as const)[zoneRegion(zone!)],
     label: zone!.name,
     address,
     fee: zone!.fee,

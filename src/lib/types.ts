@@ -96,7 +96,18 @@ export type DeliveryZone = {
   active: boolean;
   /** Pickup zones need no address. */
   pickup?: boolean;
+  /** Where it delivers, for grouping at checkout. Older zones without one are worked out from their id. */
+  region?: DeliveryRegion;
 };
+
+export type DeliveryRegion = "lagos" | "nigeria" | "international";
+
+/** The region a zone belongs to, including the original lagos/nationwide/international zones. */
+export function zoneRegion(z: Pick<DeliveryZone, "id" | "region" | "pickup">): DeliveryRegion | "pickup" {
+  if (z.pickup) return "pickup";
+  if (z.region) return z.region;
+  return z.id === "lagos" ? "lagos" : z.id === "international" ? "international" : "nigeria";
+}
 
 export type Settings = {
   store: { email: string; phone: string; whatsapp: string; instagram: string; address: string };

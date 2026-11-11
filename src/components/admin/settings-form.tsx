@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { type SettingsState, saveSettingsAction } from "@/app/admin/(console)/settings/actions";
 import { formatNaira } from "@/lib/format";
-import type { Settings } from "@/lib/types";
+import { type DeliveryRegion, type Settings, zoneRegion } from "@/lib/types";
 import { Card, Field, button, input, smallInput } from "./ui";
 
 export function SettingsForm({ initial }: { initial: Settings }) {
@@ -143,14 +143,27 @@ export function SettingsForm({ initial }: { initial: Settings }) {
         <ul className="space-y-4">
           {s.delivery.map((z, i) => (
             <li key={z.id} className={`rounded-[4px] border p-4 ${z.active ? "border-line" : "border-dashed border-[#d6cfc5] bg-[#faf8f5]"}`}>
-              <div className="grid gap-4 sm:grid-cols-[1.2fr_160px]">
+              <div className="grid gap-4 sm:grid-cols-[1.2fr_180px_160px]">
                 <Field label="Name">
                   <input className={input} value={z.name} onChange={(e) => zone(i, { name: e.target.value })} />
+                </Field>
+                <Field label="Shown under">
+                  <select
+                    className={input}
+                    value={z.pickup ? "pickup" : zoneRegion(z)}
+                    disabled={Boolean(z.pickup)}
+                    onChange={(e) => zone(i, { region: e.target.value as DeliveryRegion })}
+                  >
+                    <option value="lagos">Lagos</option>
+                    <option value="nigeria">Outside Lagos</option>
+                    <option value="international">International</option>
+                    {z.pickup && <option value="pickup">Pickup</option>}
+                  </select>
                 </Field>
                 <Field label="Fee (₦)" hint={Number(z.fee) === 0 ? "Free" : formatNaira(Number(z.fee) || 0)}>
                   <input className={input} inputMode="numeric" value={z.fee} onChange={(e) => zone(i, { fee: e.target.value as unknown as number })} />
                 </Field>
-                <Field label="Description" className="sm:col-span-2">
+                <Field label="Description (areas covered and delivery time)" className="sm:col-span-3">
                   <input className={input} value={z.description} onChange={(e) => zone(i, { description: e.target.value })} />
                 </Field>
               </div>

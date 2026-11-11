@@ -7,7 +7,7 @@ import { useActionState, useEffect, useState } from "react";
 import { type CheckoutState, placeOrder } from "@/app/(shop)/checkout/actions";
 import { type CartLine, clearCart, useCart } from "@/lib/cart";
 import { formatNaira } from "@/lib/format";
-import type { DeliveryZone, Settings } from "@/lib/types";
+import { type DeliveryZone, type Settings, zoneRegion } from "@/lib/types";
 
 const field =
   "mt-2 block h-[52px] w-full border border-line bg-paper px-4 text-[15px] outline-none transition-colors placeholder:text-muted/60 focus:border-ink aria-[invalid=true]:border-sold";
@@ -49,7 +49,17 @@ export function CheckoutForm({
 }) {
   const router = useRouter();
   const { lines } = useCart();
-  const [d, setD] = useState<Details>({ name: "", email: "", phone: "", delivery: zones[0]?.id ?? "", address: "", city: "", state: "", country: "", note: "" });
+  const [d, setD] = useState<Details>({
+    name: "",
+    email: "",
+    phone: "",
+    delivery: zones[0]?.id ?? "",
+    address: "",
+    city: "",
+    state: zones[0] && zoneRegion(zones[0]) === "lagos" ? "Lagos" : "",
+    country: "",
+    note: "",
+  });
   const [receipt, setReceipt] = useState<File | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [copied, setCopied] = useState("");
@@ -152,14 +162,27 @@ export function CheckoutForm({
             <fieldset>
               <legend className="sr-only">Choose delivery</legend>
               <div className="divide-y divide-line border border-line">
-                {zones.map((z) => (
+                {ZONE_GROUPS.map((g) => ({ ...g, list: zones.filter((z) => g.match.includes(zoneRegion(z))) }))
+                  .filter((g) => g.list.length)
+                  .map((g) => [
+                    <p key={g.title} className="caps-sm bg-paper px-5 pb-2.5 pt-5 text-muted">
+                      {g.title}
+                    </p>,
+                    ...g.list.map((z) => (
                   <label key={z.id} className={`flex cursor-pointer items-start gap-4 px-5 py-4 transition-colors ${d.delivery === z.id ? "bg-stone" : "hover:bg-stone/60"}`}>
                     <input
                       type="radio"
                       name="zone"
                       value={z.id}
                       checked={d.delivery === z.id}
-                      onChange={() => setD((x) => ({ ...x, delivery: z.id }))}
+                      onChange={() =>
+                        setD((x) => ({
+                          ...x,
+                          delivery: z.id,
+                          // Lagos zones are all in Lagos State; leave anything the customer typed for elsewhere.
+                          state: zoneRegion(z) === "lagos" ? "Lagos" : x.state === "Lagos" ? "" : x.state,
+                        }))
+                      }
                       className="mt-1 h-4 w-4 accent-ink"
                     />
                     <span className="flex-1">
@@ -168,7 +191,8 @@ export function CheckoutForm({
                     </span>
                     <span className="text-[15px] tabular-nums">{z.fee ? formatNaira(z.fee) : "Free"}</span>
                   </label>
-                ))}
+                    )),
+                  ])}
               </div>
               {errors.delivery && <p className="mt-2 text-[13px] text-sold">{errors.delivery}</p>}
             </fieldset>
@@ -177,8 +201,8 @@ export function CheckoutForm({
               <div className="mt-8 grid gap-6 sm:grid-cols-2">
                 <div className="sm:col-span-2">{input("address", "Street address", { autoComplete: "street-address", placeholder: "House number, street and area" })}</div>
                 {input("city", "Town or city", { autoComplete: "address-level2" })}
-                {input("state", zone.id === "international" ? "Region or postcode" : "State", { autoComplete: "address-level1" })}
-                {zone.id === "international" && <div className="sm:col-span-2">{input("country", "Country", { autoComplete: "country-name" })}</div>}
+                {input("state", zoneRegion(zone) === "international" ? "Region or postcode" : "State", { autoComplete: "address-level1" })}
+                {zoneRegion(zone) === "international" && <div className="sm:col-span-2">{input("country", "Country", { autoComplete: "country-name" })}</div>}
               </div>
             )}
 
@@ -349,3 +373,9 @@ function BankRow({ label, value, action }: { label: string; value: React.ReactNo
     </div>
   );
 }
+
+const ZONE_GROUPS = [
+  { title: "Lagos", match: ["lagos"] },
+  { title: "Outside Lagos", match: ["nigeria"] },
+  { title: "International & pickup", match: ["international", "pickup"] },
+];

@@ -36,7 +36,13 @@ export async function saveSettingsAction(_: SettingsState, form: FormData): Prom
   }
   if (p.madeToOrderMin > p.madeToOrderMax || p.readyMadeMin > p.readyMadeMax) errors.production = "The first number can't be larger than the second.";
 
-  s.delivery = s.delivery.map((z) => ({ ...z, name: z.name.trim(), description: z.description.trim(), fee: Number(String(z.fee).replace(/[₦,\s]/g, "")) }));
+  s.delivery = s.delivery.map((z) => ({
+    ...z,
+    name: z.name.trim(),
+    description: z.description.trim(),
+    fee: Number(String(z.fee).replace(/[₦,\s]/g, "")),
+    region: z.region && ["lagos", "nigeria", "international"].includes(z.region) ? z.region : undefined,
+  }));
   s.delivery.forEach((z, i) => {
     if (!z.name) errors[`zone.${i}`] = "Give this delivery option a name.";
     else if (!Number.isInteger(z.fee) || z.fee < 0) errors[`zone.${i}`] = "Enter the fee in naira (0 for free).";

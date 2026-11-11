@@ -14,9 +14,9 @@ const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
  * so they must come from a public address. Testing locally, the live site serves the logo.
  */
 const LIVE_SITE = "https://shoptafara.com";
-const publicOrigin = (origin: string) => (/localhost|127\.0\.0\.1/.test(origin) ? LIVE_SITE : origin);
+export const publicOrigin = (origin: string) => (/localhost|127\.0\.0\.1/.test(origin) ? LIVE_SITE : origin);
 /** Product photos are stored as full Supabase links; older ones may be site paths. */
-const imageUrl = (src: string, origin: string) => (/^https?:\/\//.test(src) ? src : `${publicOrigin(origin)}${src}`);
+export const imageUrl = (src: string, origin: string) => (/^https?:\/\//.test(src) ? src : `${publicOrigin(origin)}${src}`);
 
 export function orderEmailHtml({ order, message, link, settings, origin }: { order: Order; message: CustomerMessage; link: string; settings: Settings; origin: string }) {
   const items = order.items

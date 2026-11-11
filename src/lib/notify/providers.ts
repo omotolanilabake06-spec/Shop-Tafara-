@@ -3,7 +3,7 @@
 
 export type SendResult = { result: "sent" | "logged" | "failed"; error?: string };
 
-export async function sendEmail(msg: { to: string; subject: string; html: string; text: string; replyTo?: string }): Promise<SendResult> {
+export async function sendEmail(msg: { to: string | string[]; subject: string; html: string; text: string; replyTo?: string }): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.info(`[email] to ${msg.to}: ${msg.subject}`);
@@ -15,7 +15,7 @@ export async function sendEmail(msg: { to: string; subject: string; html: string
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: process.env.EMAIL_FROM ?? "Shop Tafara <orders@shoptafara.com>",
-        to: [msg.to],
+        to: Array.isArray(msg.to) ? msg.to : [msg.to],
         subject: msg.subject,
         html: msg.html,
         text: msg.text,

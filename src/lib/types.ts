@@ -105,6 +105,7 @@ export type Settings = {
   delivery: DeliveryZone[];
   /** The account customers transfer to at checkout. */
   bank: { bankName: string; accountName: string; accountNumber: string };
+  /** ownerEmail may hold several addresses separated by commas; every one gets the new-order alert. */
   notifications: { ownerEmail: string; sms: boolean };
 };
 

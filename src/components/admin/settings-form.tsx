@@ -194,10 +194,12 @@ export function SettingsForm({ initial }: { initial: Settings }) {
 
       <Card title="Notifications">
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Send new-order alerts to" error={errors.ownerEmail}>
+          <Field label="Send new-order alerts to" hint="Add more than one address with commas, e.g. your business email and your Gmail." error={errors.ownerEmail}>
             <input
               className={input}
-              type="email"
+              type="text"
+              inputMode="email"
+              autoComplete="off"
               value={s.notifications.ownerEmail}
               onChange={(e) => setS((x) => ({ ...x, notifications: { ...x.notifications, ownerEmail: e.target.value } }))}
             />

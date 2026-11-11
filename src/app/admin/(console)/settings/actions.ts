@@ -3,6 +3,7 @@
 import { refresh, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/admin/guard";
 import { saveSettings } from "@/lib/db/settings";
+import { ownerEmails } from "@/lib/notify/owner-emails";
 import { resetToSeed } from "@/lib/db/reset";
 import type { Settings } from "@/lib/types";
 
@@ -20,7 +21,9 @@ export async function saveSettingsAction(_: SettingsState, form: FormData): Prom
   }
   const errors: Record<string, string> = {};
   if (!email.test(s.store.email)) errors.storeEmail = "Enter a valid email address.";
-  if (!email.test(s.notifications.ownerEmail)) errors.ownerEmail = "Enter a valid email address.";
+  const alerts = ownerEmails(s.notifications.ownerEmail);
+  if (!alerts.length || !alerts.every((a) => email.test(a))) errors.ownerEmail = "Enter one or more valid email addresses, separated by commas.";
+  else s.notifications.ownerEmail = alerts.join(", ");
   s.store.instagram = s.store.instagram.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, "");
 
   s.bank = { bankName: s.bank.bankName.trim(), accountName: s.bank.accountName.trim(), accountNumber: s.bank.accountNumber.replace(/\s/g, "") };

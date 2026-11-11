@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "pickup", name: "Studio pickup", description: "Collect from our Lagos studio once your piece is ready.", fee: 0, active: true, pickup: true },
   ],
   bank: { bankName: "Access Bank", accountName: "Tafara Lagos", accountNumber: "1897801255" },
-  notifications: { ownerEmail: "contact@shoptafara.com", sms: true },
+  notifications: { ownerEmail: "contact@shoptafara.com, omotolanilabake06@gmail.com", sms: true },
 };
 
 const METHOD: Record<Order["payment"]["channel"], string[]> = {

@@ -40,7 +40,7 @@ const matchesSearch = (o: Order, q: string) =>
   [o.number, o.customer.name, o.customer.email, o.customer.phone, ...o.items.map((i) => i.name)].some((v) => v.toLowerCase().includes(q));
 
 async function Orders({ searchParams }: Pick<PageProps<"/admin/orders">, "searchParams">) {
-  const [{ view: requested, q: rawQ }, orders] = await Promise.all([searchParams, listOrders()]);
+  const [{ view: requested, q: rawQ, deleted }, orders] = await Promise.all([searchParams, listOrders()]);
   const view = VIEWS.find((v) => v.key === requested) ?? VIEWS[0];
   const q = typeof rawQ === "string" ? rawQ.trim().toLowerCase() : "";
   const shown = orders.filter(q ? (o) => matchesSearch(o, q) : view.match);
@@ -49,6 +49,9 @@ async function Orders({ searchParams }: Pick<PageProps<"/admin/orders">, "search
 
   return (
     <>
+      {typeof deleted === "string" && (
+        <p className="mb-5 rounded-[3px] border border-line bg-paper px-4 py-3 text-[15px] text-ok">Order {deleted} deleted.</p>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label="Check payment"

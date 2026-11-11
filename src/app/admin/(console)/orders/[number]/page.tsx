@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { moveOrder } from "@/app/admin/actions";
 import { Due } from "@/components/admin/due";
-import { CancelOrder, NoteForm } from "@/components/admin/order-forms";
+import { CancelOrder, DeleteOrder, NoteForm } from "@/components/admin/order-forms";
 import { PaymentBadge, StatusBadge } from "@/components/admin/status-badge";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { Card, PageHeader, Pair, button, input } from "@/components/admin/ui";
@@ -13,7 +13,7 @@ import { paymentsForOrder } from "@/lib/db/payments";
 import { isPdf, receiptUrl } from "@/lib/db/receipts";
 import { formatNaira } from "@/lib/format";
 import { customerMessage, trackingPath } from "@/lib/orders/messages";
-import { ADMIN_STATUS_LABEL, isLate, nextStatus } from "@/lib/orders/progress";
+import { ADMIN_STATUS_LABEL, deleteBlock, isLate, nextStatus } from "@/lib/orders/progress";
 import { getOrder } from "@/lib/orders/store";
 import type { Order, OrderStatus } from "@/lib/orders/types";
 import { formatDay, formatStamp } from "@/lib/working-days";
@@ -235,6 +235,7 @@ async function AdminOrder({ params }: Pick<PageProps<"/admin/orders/[number]">, 
           )}
 
           {order.status !== "delivered" && order.status !== "cancelled" && <CancelOrder number={order.number} canRefund={refundable} />}
+          <DeleteOrder number={order.number} blocked={deleteBlock(order)} paid={Boolean(order.payment.paidAt)} />
         </div>
       </div>
     </>

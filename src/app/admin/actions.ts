@@ -6,7 +6,7 @@ import { refresh } from "next/cache";
 import { requireAdmin } from "@/lib/admin/guard";
 import { SESSION_COOKIE, SESSION_DAYS, adminConfigured, createSession, passwordMatches } from "@/lib/admin/session";
 import { paymentsForOrder, recordRefund } from "@/lib/db/payments";
-import { advanceOrder, addStaffNote, cancelOrder } from "@/lib/orders/store";
+import { advanceOrder, addStaffNote, cancelOrder, deleteOrder } from "@/lib/orders/store";
 import type { OrderStatus } from "@/lib/orders/types";
 
 export type LoginState = { error?: string };
@@ -63,6 +63,14 @@ export async function cancelOrderAction(_: FormState, form: FormData): Promise<F
   }
   refresh();
   return { ok: "Order cancelled." };
+}
+
+export async function deleteOrderAction(_: FormState, form: FormData): Promise<FormState> {
+  await requireAdmin();
+  const number = String(form.get("number"));
+  const error = await deleteOrder(number);
+  if (error) return { error };
+  redirect(`/admin/orders?deleted=${encodeURIComponent(number)}`);
 }
 
 export async function addOrderNote(_: FormState, form: FormData): Promise<FormState> {

@@ -7,7 +7,7 @@ import { db, must } from "@/lib/db/supabase";
 import type { Settings } from "@/lib/types";
 import { addWorkingDays, lagosDate } from "@/lib/working-days";
 import { notifyCustomer } from "./notify";
-import { madeToOrder, nextStatus } from "./progress";
+import { deleteBlock, madeToOrder, nextStatus } from "./progress";
 import type { Order, OrderItem, OrderStatus, SentMessage, StatusEvent } from "./types";
 
 /** True while orders are sample data. The tracking page lists demo links while it is. */
@@ -337,6 +337,26 @@ export async function cancelOrder(number: string, reason: string) {
     "saving order history",
   );
   return getOrder(n);
+}
+
+/**
+ * Deletes an order for good: its payments, uploaded receipt, items, history and message log.
+ * The order number is never reused. Returns an error message, or null once it is gone.
+ */
+export async function deleteOrder(number: string): Promise<string | null> {
+  const order = await getOrder(number);
+  if (!order) return "This order no longer exists.";
+  const blocked = deleteBlock(order);
+  if (blocked) return blocked;
+
+  if (order.payment.receipt) {
+    const { error } = await db().storage.from("receipts").remove([order.payment.receipt]);
+    if (error) return `The receipt couldn't be removed (${error.message}). Nothing was deleted.`;
+  }
+  must(await db().from("payments").delete().eq("order_number", order.number), "deleting the order's payments");
+  // Items, history, messages and notes go with the order (on delete cascade).
+  must(await db().from("orders").delete().eq("number", order.number), "deleting the order");
+  return null;
 }
 
 export async function addStaffNote(number: string, text: string) {

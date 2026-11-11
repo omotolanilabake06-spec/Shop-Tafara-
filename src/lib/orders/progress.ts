@@ -82,3 +82,21 @@ export const isLate = (order: Order, today?: string) => countdown(order, today).
 export function eventAt(order: Order, status: OrderStatus) {
   return order.history.findLast((e) => e.status === status)?.at;
 }
+
+/** Delivered orders are kept this long for returns and questions before they can be deleted. */
+export const KEEP_DELIVERED_DAYS = 90;
+
+/**
+ * Whether the studio may delete this order. Cancelled and unpaid orders can go at once, delivered
+ * orders after KEEP_DELIVERED_DAYS; orders a customer is still waiting for are protected.
+ * Returns null when deleting is allowed, or the reason it isn't.
+ */
+export function deleteBlock(order: Order, now = new Date()): string | null {
+  if (order.status === "cancelled" || order.status === "pending_payment") return null;
+  if (order.status === "delivered") {
+    const at = [...order.history].reverse().find((e) => e.status === "delivered")?.at ?? order.placedAt;
+    const days = Math.floor((now.getTime() - new Date(at).getTime()) / 86_400_000);
+    return days >= KEEP_DELIVERED_DAYS ? null : `Delivered orders can be deleted ${KEEP_DELIVERED_DAYS} days after delivery (${KEEP_DELIVERED_DAYS - days} more days).`;
+  }
+  return "A customer is still waiting for this order, so it can't be deleted. Cancel it first if it isn't going ahead.";
+}

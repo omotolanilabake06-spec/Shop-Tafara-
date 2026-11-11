@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { type FormState, addOrderNote, cancelOrderAction } from "@/app/admin/actions";
-import { button, textarea } from "./ui";
+import { type FormState, addOrderNote, cancelOrderAction, deleteOrderAction } from "@/app/admin/actions";
+import { Card, button, textarea } from "./ui";
 
 export function NoteForm({ number }: { number: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(addOrderNote, {});
@@ -59,5 +59,45 @@ export function CancelOrder({ number, canRefund }: { number: string; canRefund: 
         </button>
       </div>
     </form>
+  );
+}
+
+/** Deletes a finished, cancelled or unpaid order for good, after a confirmation. */
+export function DeleteOrder({ number, blocked, paid }: { number: string; blocked: string | null; paid: boolean }) {
+  const [confirming, setConfirming] = useState(false);
+  const [state, action, pending] = useActionState<FormState, FormData>(deleteOrderAction, {});
+  return (
+    <Card title="Delete order">
+      {blocked ? (
+        <p className="text-[14px] text-soft">{blocked}</p>
+      ) : !confirming ? (
+        <>
+          <p className="text-[14px] text-soft">Removes this order and everything linked to it. Use it to clear cancelled, unpaid or old orders.</p>
+          <button type="button" className={`${button.danger} mt-3`} onClick={() => setConfirming(true)}>
+            Delete order…
+          </button>
+        </>
+      ) : (
+        <div className="rounded-[4px] border border-sold/40 bg-[#fcf4f2] p-4">
+          <p className="font-medium text-sold">Delete {number} for good?</p>
+          <p className="mt-1 text-[14px] text-soft">
+            The order, its {paid ? "payment record, " : ""}receipt, history and email log are all removed. This can&rsquo;t be undone.
+            {paid ? " Its payment will no longer appear in Payments or the CSV, so download the CSV first if you need it for your records." : ""}
+          </p>
+          {state.error && <p className="mt-2 text-[14px] font-medium text-sold">{state.error}</p>}
+          <div className="mt-3 flex gap-3">
+            <form action={action}>
+              <input type="hidden" name="number" value={number} />
+              <button type="submit" disabled={pending} className={button.dangerSolid}>
+                {pending ? "Deleting…" : "Yes, delete it"}
+              </button>
+            </form>
+            <button type="button" className={button.secondary} onClick={() => setConfirming(false)}>
+              Keep it
+            </button>
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
